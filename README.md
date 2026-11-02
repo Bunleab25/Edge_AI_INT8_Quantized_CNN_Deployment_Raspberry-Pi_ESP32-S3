@@ -80,8 +80,8 @@ quantization_edge_ai/
 ### 1. Installation
 
 ```bash
-git clone https://github.com/Bunleab25/quantization_edge_ai.git
-cd quantization_edge_ai
+git clone https://github.com/Bunleab25/Edge_AI_INT8_Quantized_CNN_Deployment_Raspberry-Pi_ESP32-S3.git
+cd Edge_AI_INT8_Quantized_CNN_Deployment_Raspberry-Pi_ESP32-S3
 pip install -r requirements.txt
 ```
 

@@ -125,21 +125,29 @@ The neural network is architected to execute without requiring external PSRAM:
 
 ## 5. Step-by-Step Build & Flash Guide
 
-### Step 1: Re-export Weights & Test Samples (Host PC)
+### Step 1 (Optional): Re-export Weights & Test Samples (Host PC)
+
+The generated headers are included in this repository, so skip this step for a normal build. To regenerate them, run the exporter from the repository root; it requires `checkpoints/best_advanced_model.pth`, which is not included in this repository.
+
 ```bash
-conda activate ai-ml
-cd ~/research_academic/mnist_cnn_project
+# From the repository root
 python esp_quantize/converter/export_espdl.py
 ```
 
 ### Step 2: Set Up ESP-IDF v5.5 Toolchain
+
+Install ESP-IDF v5.5 and activate its environment. For the standard `$HOME/esp/esp-idf` installation:
+
 ```bash
-. $HOME/.espressif/v5.5.5/esp-idf/export.sh
+source "$HOME/esp/esp-idf/export.sh"
 ```
 
 ### Step 3: Build the Firmware
+
+From the repository root:
+
 ```bash
-cd ~/research_academic/mnist_cnn_project/esp_quantize/firmware
+cd esp_quantize/firmware
 
 # Set target chip to ESP32-S3 (first run)
 idf.py set-target esp32s3
@@ -190,8 +198,7 @@ Row 1: Avg: 666.2 ms
 After boot self-test, the ESP32-S3 listens on UART0 for 784-byte frames:
 
 ```bash
-conda activate ai-ml
-cd ~/research_academic/mnist_cnn_project
+# From the repository root
 python esp_quantize/tools/esp32_streamer.py --port /dev/ttyUSB0 --samples 5
 ```
 
@@ -230,7 +237,7 @@ Avg Host Round-Trip:      918.98 ms
 To enable lightning-fast debugging and verify pure C mathematical parity without reflashing the microcontroller, a standalone host C test harness is included:
 
 ```bash
-cd ~/research_academic/mnist_cnn_project
+# From the repository root
 gcc -O3 -Iesp_quantize/firmware/main esp_quantize/test_pc_inference.c -lm -o esp_quantize/test_pc_bin
 ./esp_quantize/test_pc_bin
 ```

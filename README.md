@@ -37,6 +37,17 @@ All metrics are empirically verified over all **10,000 holdout test images** (`d
   <img src="reports/edge_benchmarks_combined.png" width="95%" alt="Dual Edge Benchmark: Raspberry Pi 5 vs ESP32-S3" />
 </p>
 
+## Hardware Demonstrations
+
+<p align="center">
+  <img src="reports/esp32-inference-demo.png" width="48%" alt="ESP32-S3 board connected to an LCD displaying a digit inference result" />
+  <img src="reports/raspberry-pi-inference-demo.jpeg" width="48%" alt="Raspberry Pi board connected to an LCD displaying a digit inference result" />
+</p>
+<p align="center">
+  <em>ESP32-S3: Pred: 9 (96%); Time: 683.56 ms</em> &nbsp; | &nbsp;
+  <em>Raspberry Pi: Pred: 5; Conf: 98%; Time: 235 us</em>
+</p>
+
 ---
 
 ## Repository Structure

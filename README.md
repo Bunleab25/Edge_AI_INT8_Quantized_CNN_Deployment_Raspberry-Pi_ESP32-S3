@@ -23,15 +23,17 @@ This repository provides an end-to-end edge AI deployment pipeline for handwritt
 
 ## Hardware Benchmarks
 
-All metrics are empirically verified over all **10,000 holdout test images** (`data/mnist_test_10k.npz`):
+The host and Raspberry Pi test-set metrics below use all **10,000 holdout test images** (`data/mnist_test_10k.npz`). The ESP32-S3 row reports a separate **10-input boot self-test**:
 
-| Hardware Platform | Architecture & OS | Model Format | Latency (ms/sample) | Throughput (FPS) | Top-1 Test Accuracy | Memory Footprint |
+| Hardware Platform | Architecture & OS | Model Format | Latency (ms/sample) | Throughput (FPS) | Accuracy / Verification | Memory Footprint |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
 | **Host PC (x86_64)** | Intel Core i7 (Linux Ubuntu) | FP32 Baseline | 0.176 ms | 5,681.8 FPS | 99.71% (29 errors) | 1,154 KB |
 | **Host PC (x86_64)** | Intel Core i7 (Linux Ubuntu) | INT8 (ONNX QDQ) | **0.104 ms** | **9,593.0 FPS** | **99.69%** (31 errors) | **309.9 KB** |
 | **Raspberry Pi 5** | 4x ARM Cortex-A76 @ 2.4 GHz | FP32 Baseline | 1.733 ms | 577.0 FPS | 99.71% (29 errors) | 1,126.9 KB |
-| **Raspberry Pi 5** | 4x ARM Cortex-A76 @ 2.4 GHz | INT8 (ONNX NEON) | **0.282 ms** | **3,546.6 FPS** | **99.69%** (31 errors) | **309.9 KB** (6.15x speedup) |
-| **ESP32-S3 MCU** | 2x Xtensa LX7 @ 240 MHz (FreeRTOS)| INT8 (Pure C99) | **666.2 ms** | 1.5 FPS | **100.0%** (Verified Sets) | **280.5 KB** (Flash .rodata) |
+| **Raspberry Pi 5** | 4x ARM Cortex-A76 @ 2.4 GHz | INT8 (ONNX NEON) | **0.282 ms mean** | **3,546.6 FPS** | **99.69%** (31 errors) | **309.9 KB** (6.15x speedup) |
+| **ESP32-S3 MCU** | 2x Xtensa LX7 @ 240 MHz (FreeRTOS)| INT8 (Pure C99) | **666.2 ms mean** | 1.5 FPS | **10/10 boot self-test (100%)** | **280.5 KB** (Flash .rodata) |
+
+**Measurement notes:** Raspberry Pi latency is the mean ONNX `session.run` call over 10,000 single-image samples after 50 warm-ups; preprocessing is excluded. Its throughput is calculated over the benchmark loop and is not strictly the reciprocal of mean call latency. ESP32-S3 latency is the mean over 10 embedded boot self-test inputs; it includes pixel-LUT preprocessing through softmax, but excludes UART input, LCD display, and UART output. The table timings use different sample sets and timing scopes, so they are not strict end-to-end comparisons. Separately, a host-side pure-C evaluation reports **99.69% (9,969/10,000)**; that full test-set result is distinct from the ESP32-S3 boot self-test.
 
 <p align="center">
   <img src="reports/edge_benchmarks_combined.png" width="95%" alt="Dual Edge Benchmark: Raspberry Pi 5 vs ESP32-S3" />
@@ -44,9 +46,10 @@ All metrics are empirically verified over all **10,000 holdout test images** (`d
   <img src="reports/raspberry-pi-inference-demo.jpeg" width="48%" alt="Raspberry Pi board connected to an LCD displaying a digit inference result" />
 </p>
 <p align="center">
-  <em>ESP32-S3: Pred: 9 (96%); Time: 683.56 ms</em> &nbsp; | &nbsp;
-  <em>Raspberry Pi: Pred: 5; Conf: 98%; Time: 235 us</em>
+  <em>ESP32-S3 single run: Pred: 9 (96%); Time: 683.56 ms</em> &nbsp; | &nbsp;
+  <em>Raspberry Pi single run: Pred: 5; Conf: 98%; Time: 235 us</em>
 </p>
+<p align="center"><em>Photo timings are individual demo readings, not benchmark averages.</em></p>
 
 ---
 

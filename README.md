@@ -12,7 +12,7 @@ This repository provides an end-to-end edge AI deployment pipeline for handwritt
 | :--- | :--- | :--- |
 | **Hardware Platform** | **Espressif ESP32-S3** | **Raspberry Pi 5 Model B** |
 | **Processor Architecture** | Dual-Core 32-bit Xtensa LX7 @ 240 MHz | Quad-Core 64-bit ARM Cortex-A76 @ 2.4 GHz |
-| **Deployment Suite** | [`esp_quantize/`](esp_quantize/) (100% Pure Standard C99) | [`pi_quantize/`](pi_quantize/) (ARM NEON SIMD Accelerated) |
+| **Deployment Suite** | [`esp_quantize/`](esp_quantize/) (C99-based GCC implementation) | [`pi_quantize/`](pi_quantize/) (ARM NEON SIMD Accelerated) |
 | **Inference Framework** | Bare-metal FreeRTOS (`-O3` optimized) | ONNX Runtime 1.19+ Engine |
 | **Memory Allocation** | **Zero PSRAM** (50.1 KB internal SRAM) | Standard Linux DRAM (~120 MB RSS) |
 | **Weight Placement** | Static Flash `.rodata` (280.5 KB, zero heap) | Memory-mapped INT8 ONNX file (309.9 KB) |
@@ -25,13 +25,13 @@ This repository provides an end-to-end edge AI deployment pipeline for handwritt
 
 The host and Raspberry Pi test-set metrics below use all **10,000 holdout test images** (`data/mnist_test_10k.npz`). The ESP32-S3 row reports a separate **10-input boot self-test**:
 
-| Hardware Platform | Architecture & OS | Model Format | Latency (ms/sample) | Throughput (FPS) | Accuracy / Verification | Memory Footprint |
+| Hardware Platform | Architecture & OS | Model Format | Latency (ms/sample) | Throughput (FPS) | Accuracy / Verification | Memory Footprint (KiB) |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
-| **Host PC (x86_64)** | Intel Core i7 (Linux Ubuntu) | FP32 Baseline | 0.176 ms | 5,681.8 FPS | 99.71% (29 errors) | 1,154 KB |
-| **Host PC (x86_64)** | Intel Core i7 (Linux Ubuntu) | INT8 (ONNX QDQ) | **0.104 ms** | **9,593.0 FPS** | **99.69%** (31 errors) | **309.9 KB** |
-| **Raspberry Pi 5** | 4x ARM Cortex-A76 @ 2.4 GHz | FP32 Baseline | 1.733 ms | 577.0 FPS | 99.71% (29 errors) | 1,126.9 KB |
-| **Raspberry Pi 5** | 4x ARM Cortex-A76 @ 2.4 GHz | INT8 (ONNX NEON) | **0.282 ms mean** | **3,546.6 FPS** | **99.69%** (31 errors) | **309.9 KB** (6.15x speedup) |
-| **ESP32-S3 MCU** | 2x Xtensa LX7 @ 240 MHz (FreeRTOS)| INT8 (Pure C99) | **666.2 ms mean** | 1.5 FPS | **10/10 boot self-test (100%)** | **280.5 KB** (Flash .rodata) |
+| **Host PC (x86_64)** | Intel Core i7 (Linux Ubuntu) | FP32 Baseline | 0.176 ms | 5,681.8 FPS | 99.71% (29 errors) | 1,126.9 |
+| **Host PC (x86_64)** | Intel Core i7 (Linux Ubuntu) | INT8 (ONNX QDQ) | **0.104 ms** | **9,593.0 FPS** | **99.69%** (31 errors) | **309.9** |
+| **Raspberry Pi 5** | 4x ARM Cortex-A76 @ 2.4 GHz | FP32 Baseline | 1.733 ms | 577.0 FPS | 99.71% (29 errors) | 1,126.9 |
+| **Raspberry Pi 5** | 4x ARM Cortex-A76 @ 2.4 GHz | INT8 (ONNX NEON) | **0.282 ms mean** | **3,546.6 FPS** | **99.69%** (31 errors) | **309.9** (6.15x speedup) |
+| **ESP32-S3 MCU** | 2x Xtensa LX7 @ 240 MHz (FreeRTOS)| INT8 (C99-based GCC) | **666.2 ms mean** | 1.5 FPS | **10/10 boot self-test (100%)** | **280.5** (Flash .rodata) |
 
 **Measurement notes:** Raspberry Pi latency is the mean ONNX `session.run` call over 10,000 single-image samples after 50 warm-ups; preprocessing is excluded. Its throughput is calculated over the benchmark loop and is not strictly the reciprocal of mean call latency. ESP32-S3 latency is the mean over 10 embedded boot self-test inputs; it includes pixel-LUT preprocessing through softmax, but excludes UART input, LCD display, and UART output. The table timings use different sample sets and timing scopes, so they are not strict end-to-end comparisons. Separately, a host-side pure-C evaluation reports **99.69% (9,969/10,000)**; that full test-set result is distinct from the ESP32-S3 boot self-test.
 
@@ -59,7 +59,7 @@ The host and Raspberry Pi test-set metrics below use all **10,000 holdout test i
 quantization_edge_ai/
 ├── data/              # 10,000 MNIST hold-out test dataset (.npz & raw ubyte)
 ├── docs/              # Technical architecture documentation & blueprints (file.md)
-├── esp_quantize/      # Tier 1: ESP32-S3 microcontroller pure C99 deployment suite
+├── esp_quantize/      # Tier 1: ESP32-S3 microcontroller C99-based GCC deployment suite
 ├── models/            # Quantized INT8 & FP32 ONNX graphs & parameter tables
 ├── pi_quantize/       # Tier 2: Raspberry Pi 5 ARM NEON deployment suite & HUD
 ├── quan_cnn/          # Modular PyTorch post-training quantization engine
@@ -78,7 +78,7 @@ quantization_edge_ai/
 | Directory | Purpose | Deployment Target |
 | :--- | :--- | :--- |
 | [`models/`](models/) | Deployable INT8 & FP32 ONNX graphs, scale/zero-point tables, and sensitivity audit | Cross-Platform |
-| [`esp_quantize/`](esp_quantize/) | Pure C99 inference engine and FreeRTOS firmware (Zero PSRAM, 50.1 KB SRAM) | ESP32-S3 (Tier 1) |
+| [`esp_quantize/`](esp_quantize/) | C99-based GCC inference engine and FreeRTOS firmware (Zero PSRAM, 50.1 KB SRAM) | ESP32-S3 (Tier 1) |
 | [`pi_quantize/`](pi_quantize/) | ARM NEON SIMD accelerated inference, live camera HUD, and thermal telemetry | Raspberry Pi 5 (Tier 2) |
 | [`scripts/`](scripts/) | CLI verification (`verify_onnx.py`), PTQ runner, and publication graph generators | Host Workstation |
 | [`quan_cnn/`](quan_cnn/) | Modular PyTorch quantization package (Conv-BN-ReLU fusion, calibration, SQNR audit) | PyTorch PTQ Engine |
@@ -128,11 +128,17 @@ cd pi_quantize
 chmod +x setup_pi.sh
 ./setup_pi.sh
 
+# Activate the virtual environment in this shell (the setup script's activation does not persist):
+source "$HOME/edge_ai_venv/bin/activate"
+
 # Run statistical benchmark (mean, median, p90, p99, SoC temperature):
 python benchmark_pi.py --model ../models/quantized_model_int8.onnx --samples 10000 --plot
 
 # Single image inference:
 python inference_pi.py --image ../test_images/7/img_00000.png
+
+# Install the camera script's OpenCV dependency:
+python -m pip install opencv-python
 
 # Real-time live camera digit recognition HUD:
 python live_camera_pi.py --camera 0
@@ -146,19 +152,28 @@ python live_camera_pi.py --camera 0
 
 ## ESP32-S3 Microcontroller Deployment (`esp_quantize/`)
 
-The quantized neural network runs as a **bare-metal pure C99 firmware** with **zero dynamic heap allocation** and **0 KB external PSRAM**:
+The quantized neural network runs as **C99-based GCC firmware** with **zero dynamic heap allocation** and **0 KB external PSRAM**:
 
 ```bash
 cd esp_quantize
 
-# Verify C99 inference accuracy on host PC:
-gcc -O3 test_pc_inference.c -o test_pc && ./test_pc
+# Verify C99-based inference accuracy on the host PC (GCC's aligned attribute is used):
+gcc -std=c99 -O3 test_pc_inference.c -lm -o test_pc && ./test_pc
 
-# Benchmark all 10,000 test images in pure C99:
-gcc -O3 evaluate_full_10k_c.c -o eval_10k && ./eval_10k
+# Compile the full-test evaluator:
+gcc -std=c99 -O3 evaluate_full_10k_c.c -lm -o eval_10k
 
-# Stream test images from host PC to ESP32-S3 over USB-UART:
-python tools/esp32_streamer.py --port /dev/ttyUSB0 --baud 115200 --samples 20
+# The evaluator opens data/MNIST/raw relative to the current directory, so run it from the repository root:
+cd ..
+./esp_quantize/eval_10k
+
+# Install the host-side streamer dependencies:
+python -m pip install torchvision pyserial
+
+# The ESP32-S3 must be flashed with the streaming firmware and listening at 115200 baud.
+# Replace /dev/ttyUSB0 with the serial port shown on your host (for example, COM3 on Windows):
+cd esp_quantize
+python tools/esp32_streamer.py --port /dev/ttyUSB0 --baud 115200 --samples 20 --data_dir ../data
 ```
 
 <p align="center">

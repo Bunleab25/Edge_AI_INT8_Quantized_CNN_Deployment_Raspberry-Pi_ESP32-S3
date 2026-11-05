@@ -41,15 +41,26 @@ The host and Raspberry Pi test-set metrics below use all **10,000 holdout test i
 
 ## Hardware Demonstrations
 
+### Device setup
+
 <p align="center">
   <img src="reports/esp32-inference-demo.png" width="48%" alt="ESP32-S3 board connected to an LCD displaying a digit inference result" />
   <img src="reports/raspberry-pi-inference-demo.jpeg" width="48%" alt="Raspberry Pi board connected to an LCD displaying a digit inference result" />
 </p>
 <p align="center">
-  <em>ESP32-S3 single run: Pred: 9 (96%); Time: 683.56 ms</em> &nbsp; | &nbsp;
-  <em>Raspberry Pi single run: Pred: 5; Conf: 98%; Time: 235 us</em>
+  <em>ESP32-S3 LCD demo: digit 9 (96%); 683.56 ms</em> &nbsp; | &nbsp;
+  <em>Raspberry Pi LCD demo: digit 5 (98%); 235 µs</em>
 </p>
-<p align="center"><em>Photo timings are individual demo readings, not benchmark averages.</em></p>
+<p align="center"><em>These are individual LCD demo readings, not benchmark averages.</em></p>
+
+### Streaming inference output
+
+| ESP32-S3 serial inference | Raspberry Pi SSH sample output |
+| :---: | :---: |
+| <img src="reports/esp32-s3-streaming-inference-terminal.jpg" width="100%" alt="ESP-IDF terminal showing the ESP32-S3 streaming inference result for digit 7 with 95.1% confidence in 665.31 milliseconds" /> | <img src="reports/raspberry-pi-ssh-sample-output.jpg" width="100%" alt="Raspberry Pi SSH terminal showing consecutive MNIST sample predictions with median and best latency" /> |
+| ESP-IDF serial monitor capture of a streamed digit inference: digit 7, 95.1% confidence, 665.31 ms. | Interactive `lcd_demo.py` output with per-sample median and best latency over 20 runs. The visible samples are an excerpt, not the 10,000-image benchmark above. |
+
+<p align="center"><em>Console readings show demo output and are not directly comparable benchmark averages; see the measurement notes above for benchmark methodology.</em></p>
 
 ---
 
